@@ -5,4 +5,5 @@
   :main ^:skip-aot interprete.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
-                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})
+                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
+  :repl-options {:init-ns interprete.core})
