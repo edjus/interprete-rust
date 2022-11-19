@@ -24,3 +24,15 @@
     (is (= false (palabra-reservada? 'hola)))
     )
 )
+
+(deftest test-identificador?
+  (testing "Should be identificador"
+    (is (= true (identificador? 'boolean)))
+    (is (= true (identificador? 'e120)))
+    )
+
+  (testing "Shouldn't be identificador"
+    (is (= false (identificador? 'bool)))
+    (is (= false (identificador? '12e0)))
+    )
+  )
