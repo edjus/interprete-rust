@@ -37,3 +37,42 @@
     (is (= false (identificador? '12e0)))
     )
 )
+
+(deftest test-dividir
+  (testing "Dividir are correct"
+    (is (= (dividir 12 3) 4 ))
+    (is (= (dividir 12.0 3) 4.0 ))
+    (is (= (dividir 12 3.0) 4.0 ))
+    (is (= (dividir 12.0 3.0) 4.0 ))
+    (is (= (dividir 1 2) 0 ))
+    (is (= (dividir 1 2.0) 0.5 ))
+    )
+  )
+
+(deftest test-pasar-a-int
+  (testing "Pasar-a-int can parse"
+    (is (= (pasar-a-int "10") 10 ))
+    (is (= (pasar-a-int 10.0) 10 ))
+    (is (= (pasar-a-int 10) 10 ))
+    (is (= (pasar-a-int '4) 4 ))
+    )
+
+  (testing "Pasar-a-int can't parse"
+    (is (= (pasar-a-int "123r") "123r" ))
+    (is (= (pasar-a-int 'a) 'a ))
+    (is (= (pasar-a-int '[10.0]) [10.0])))
+  )
+
+(deftest test-pasar-a-float
+  (testing "Pasar-a-float can parse"
+    (is (= (pasar-a-float "10") 10.0 ))
+    (is (= (pasar-a-float 10.0) 10.0 ))
+    (is (= (pasar-a-float 10) 10.0 ))
+    (is (= (pasar-a-float '4) 4.0 ))
+    )
+
+  (testing "Pasar-a-float can't parse"
+    (is (= (pasar-a-float "123r") "123r" ))
+    (is (= (pasar-a-float 'a) 'a ))
+    (is (= (pasar-a-float '[10]) [10])))
+  )

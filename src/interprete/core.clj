@@ -2113,7 +2113,12 @@
 ; user=> (dividir 1 2.0)
 ; 0.5
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn dividir )
+(defn dividir [x,y]
+  (cond
+    (or (float? x) (float? y)) (float (/ x y))
+    :else (int (/ x y))
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; COMPATIBLES?: Recibe dos elementos. Si el primero es un tipo de dato de Rust y el segundo es un valor de Clojure
@@ -2158,7 +2163,20 @@
 ; user=> (pasar-a-int [10.0])
 ; [10.0]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn pasar-a-int )
+
+(defn intentar-parsear [parser, x]
+  (try
+      (parser x)
+    (catch Exception e x))
+  )
+
+(defn pasar-a-int [x]
+  (cond
+    (int? x) x
+    (string? x) (intentar-parsear read-string x)
+    :else (intentar-parsear int x)
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; PASAR-A-FLOAT: Recibe un elemento. Si puede devolverlo expresado como un numero de punto flotante, lo hace. Si no,
@@ -2175,9 +2193,19 @@
 ; user=> (pasar-a-float [10])
 ; [10]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn pasar-a-float
 
-; )
+(defn handle-resultado-string-parse-float [resultado]
+  (cond
+    (int? resultado) (float resultado)
+    :else resultado
+    )
+  )
+(defn pasar-a-float [x]
+  (cond
+    (float? x) x
+    (string? x) (handle-resultado-string-parse-float (intentar-parsear read-string x))
+    :else (intentar-parsear float x))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; CARGAR-EN-ULT-REG: Recibe un vector de registros de activacion, una direccion, un tipo y un valor. Devuelve el
