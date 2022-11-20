@@ -25,6 +25,7 @@
     )
 )
 
+; TODO: ver que hay que validar
 (deftest test-identificador?
   (testing "Should be identificador"
     (is (= true (identificador? 'boolean)))
@@ -35,4 +36,4 @@
     (is (= false (identificador? 'bool)))
     (is (= false (identificador? '12e0)))
     )
-  )
+)
