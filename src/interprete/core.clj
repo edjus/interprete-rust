@@ -2260,8 +2260,24 @@
 ; [[[String "2"] [i64 6] [i64 2] [f64 3] [i64 0]] [[i64 6] [i64 2] [i64 [0 3]] [i64 [0 4]] [i64 2] [i64 2]]]
 ;                                 ^^^ ^
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn cargar-en-reg-dest
 
-; )
+(defn procesar-registro [registro, pos, tipo, valor]
+  (reemplazar-en-coleccion pos (vector tipo valor) registro)
+  )
+
+(defn cargar-en-reg-dest [regs-act, cords, tipo, valor]
+  (cond
+    (not= (count cords) 2) (do (print "ERROR: ") (println (buscar-mensaje 57)) nil)
+    :else (let [x (first cords) y (last cords)]
+            (cond
+              (>= x (count regs-act)) (do (print "ERROR: ") (println (buscar-mensaje 57)) nil)
+              :else (let [registro (nth regs-act x)]
+                      (cond
+                        (>= y (count registro)) (do (print "ERROR: ") (println (buscar-mensaje 57)) nil)
+                        :else (assoc regs-act x (procesar-registro registro y tipo valor))))
+                        )
+                      )
+    )
+)
 
 true
