@@ -242,6 +242,7 @@
     54 "SE ESPERABA UN IDENTIFICADOR DE PUNTERO"
     55 "FALLO EN UNA OPERACION MONADICA"
     56 "FALLO EN UNA OPERACION DIADICA"
+    57 "FALLO INDICE INVALIDO EN LA COLECCION"
     cod)
   )
 
@@ -1988,7 +1989,18 @@
 ; user=> (ya-declarado-localmente? 'Write [[0 2] [['io ['lib '()] 0] ['Write ['lib '()] 0] ['entero_a_hexa ['fn [(list ['n (symbol ":") 'i64]) 'String]] 2]]])
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn ya-declarado-localmente? )
+
+(defn procesar-contexto [pos, ternas]
+  (drop pos (map first ternas))
+  )
+
+(defn buscar-identificador [identificador, lista]
+  (not (nil? (some #(= identificador %) lista)))
+  )
+
+(defn ya-declarado-localmente? [identificador, contexto]
+   (buscar-identificador identificador (procesar-contexto (last (first contexto)) (second contexto)))
+   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; CARGAR-CONST-EN-TABLA: Recibe un ambiente
@@ -2219,9 +2231,21 @@
 ; [[[String "2"] [i64 6] [i64 2] [i64 3] [i64 0]] [[f64 3] [i64 0]]]
 ;                                                   ^^^ ^
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn cargar-en-ult-reg
+(defn reemplazar-en-coleccion [pos, valor, coleccion]
+  (cond
+    (>= pos (count coleccion)) (do (print "ERROR: ") (println (buscar-mensaje 57)) nil)
+    :else (assoc coleccion pos valor)
+    )
+  )
 
-; )
+(defn cargar-en-ult-reg [regs-activacion, direccion, tipo, valor]
+  (let [resultado (reemplazar-en-coleccion direccion (vector tipo valor) (last regs-activacion))]
+    (cond
+      (nil? resultado) resultado
+      :else (conj (vec (drop-last regs-activacion)) resultado)
+          )
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; CARGAR-EN-REG-DEST: Recibe un vector de registros de activacion, coordenadas, un tipo y un valor. Devuelve el
