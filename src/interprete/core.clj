@@ -1693,19 +1693,7 @@
 ; POPMULREF: Como POPADDREF, pero multiplica.
 ; POPDIVREF: Como POPADDREF, pero divide.
 ; POPMODREF: Como POPADDREF, pero calcula el resto de la division.
-; SUB: Como ADD, pero resta.
-; MUL: Como ADD, pero multiplica.
-; DIV: Como ADD, pero divide.
-; MOD: Como ADD, pero calcula el resto de la division.
 ; CHR: Incrementa cont-prg en 1, quita de la pila dos elementos (un string y un indice), selecciona el char del string indicado por el indice y lo coloca al final de la pila.
-; OR: Como ADD, pero calcula el or entre los dos valores.
-; AND: Como ADD, pero calcula el and entre los dos valores.
-; EQ: Como ADD, pero calcula la operacion relacional = entre los dos valores.
-; NEQ: Como ADD, pero calcula la operacion relacional != entre los dos valores.
-; GT:  Como ADD, pero calcula la operacion relacional > entre los dos valores.
-; GTE: Como ADD, pero calcula la operacion relacional >= entre los dos valores.
-; LT: Como ADD, pero calcula la operacion relacional < entre los dos valores.
-; LTE: Como ADD, pero calcula la operacion relacional <= entre los dos valores.
 ; NEG: Incrementa cont-prg en 1, quita de la pila un elemento numerico, le cambia el signo y lo coloca al final de la pila.
 ; NOT: Incrementa cont-prg en 1, quita de la pila un elemento booleano, lo niega y lo coloca al final de la pila.
 ; TOI: Incrementa cont-prg en 1, quita de la pila un elemento numerico, lo convierte a entero y lo coloca al final de la pila.
@@ -1880,6 +1868,55 @@
       ; pila recibida: [1 0 0 3 4]
       ; pila al llamar recursivamente a interpretar: [1 0 0 7]
       ADD (let [res (aplicar-operador-diadico + pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; SUB: Como ADD, pero resta.
+      SUB (let [res (aplicar-operador-diadico - pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; MUL: Como ADD, pero multiplica.
+      MUL (let [res (aplicar-operador-diadico * pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; DIV: Como ADD, pero divide.
+      DIV (let [res (aplicar-operador-diadico / pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; MOD: Como ADD, pero calcula el resto de la division.
+      ;TODO: ver si rem se comporta como el resto de rust si es necesario
+      MOD (let [res (aplicar-operador-diadico rem pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; OR: Como ADD, pero calcula el or entre los dos valores.
+      OR (let [res (aplicar-operador-diadico #(or %1 %2) pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; AND: Como ADD, pero calcula el and entre los dos valores.
+      AND (let [res (aplicar-operador-diadico #(and %1 %2) pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; EQ: Como ADD, pero calcula la operacion relacional = entre los dos valores.
+      EQ (let [res (aplicar-operador-diadico = pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; NEQ: Como ADD, pero calcula la operacion relacional != entre los dos valores.
+      NEQ (let [res (aplicar-operador-diadico not= pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; GT:  Como ADD, pero calcula la operacion relacional > entre los dos valores.
+      GT (let [res (aplicar-operador-diadico > pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; GTE: Como ADD, pero calcula la operacion relacional >= entre los dos valores.
+      GTE (let [res (aplicar-operador-diadico >= pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; LT: Como ADD, pero calcula la operacion relacional < entre los dos valores.
+      LT (let [res (aplicar-operador-diadico < pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
+      ; LTE: Como ADD, pero calcula la operacion relacional <= entre los dos valores.
+      LTE (let [res (aplicar-operador-diadico <= pila)]
             (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
       )
