@@ -2083,7 +2083,31 @@
 ; [EOF () [fn main ( ) { let x : i64 = 10 ; let y : i64 = 20 ; println! ( "{}" , x + y ) }] :sin-errores [[0] [[main [fn [() ()]] 2]]] 2 [[CAL 2] HLT [PUSHFI 10] [POP 0] [PUSHFI 20] [POP 1] [PUSHFI "{}"] [PUSHFM 0] [PUSHFM 1] ADD [PUSHFI 2] OUT NL] [[2 [i64 nil] [i64 nil]]]]
 ;                                                                                           ^^^^^^^^^^^^  ^^^ ^^^^^^^^^^^^^^^^^^^^^^^
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn restaurar-contexto-anterior )
+
+(defn frontera [context]
+   (last (first context))
+  )
+
+(defn eliminar-ultimo [vect]
+  (vec (drop-last vect))
+  )
+
+(defn eliminar-desde [pos, vect]
+  (vec (take pos vect))
+  )
+
+(defn modificar-contexto-restaurar-anterior [context, frontera]
+  (vector (eliminar-ultimo (first context)) (eliminar-desde frontera (second context)))
+  )
+
+(defn restaurar-contexto-anterior [amb]
+  (if (= (estado amb) :sin-errores)
+    (let [context (contexto amb)]
+      (assoc amb 4 (modificar-contexto-restaurar-anterior context (frontera context)))
+      )
+    amb
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; BUSCAR-TIPO-DE-RETORNO: Recibe un ambiente y la direccion de una funcion a ser buscada en el segundo subvector del
