@@ -219,3 +219,65 @@
            nil))
     )
   )
+
+(deftest test-funciones-auxiliares
+  (testing "cambiar signo"
+    (is (= (cambiar-signo -1) 1))
+    (is (= (cambiar-signo 1) -1))
+    (is (= (cambiar-signo 0) 0))
+    )
+
+  (testing "negar boolenao"
+    (is (= (negar-booleano false) true))
+    (is (= (negar-booleano true) false))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (negar-booleano 0)))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (negar-booleano "a")))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (negar-booleano 'i)))
+    )
+
+  (testing "numero a entero"
+    (is (= (numero-a-entero 5.1) 5))
+    (is (= (numero-a-entero -3) -3))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-entero false)))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-entero "2")))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-entero 'e2)))
+    )
+
+  (testing "numero a float"
+    (is (= (numero-a-float 4) 4.0))
+    (is (= (numero-a-float -1.0) -1.0))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-float false)))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-float "2")))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-float 'e2)))
+    )
+
+  (testing "raiz-cuadrada"
+    (is (= (raiz-cuadrada 9) 3.0))
+    (is (= (raiz-cuadrada 144.0) 12.0))
+    (is (= (raiz-cuadrada 0) 0.0))
+    (is (thrown-with-msg? Exception #"Valor invalido" (raiz-cuadrada -4)))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (raiz-cuadrada "0")))
+    )
+
+  (testing "calcular-seno"
+    (is (= (calcular-seno 0) 0.0))
+    (is (= (calcular-seno (/ Math/PI 2)) 1.0))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (calcular-seno false)))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (calcular-seno "0")))
+    )
+
+  (testing "calcular-arcotangente"
+    (is (= (calcular-arcotangente 0) 0.0))
+    (is (= (calcular-arcotangente 1) (/ Math/PI 4)))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (calcular-arcotangente false)))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (calcular-arcotangente "0")))
+    )
+
+  (testing "calcular-valor-absoluto"
+    (is (= (calcular-valor-absoluto -1) 1))
+    (is (= (calcular-valor-absoluto 3) 3))
+    (is (= (calcular-valor-absoluto 0) 0))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (calcular-valor-absoluto false)))
+    (is (thrown-with-msg? Exception #"Tipo invalido" (calcular-valor-absoluto "0")))
+    )
+  )
