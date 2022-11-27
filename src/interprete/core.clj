@@ -2015,9 +2015,33 @@
 ; [; (fn main ( ) { println! ( "{}" , TRES ) }) [use std :: io ; const TRES : i64 = 3] :sin-errores [[0] [[io [lib ()] 0] [TRES [const i64] 3]]] 0 [[CAL 0] HLT] []]
 ;                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn identificador [simb-parseados, pos]
+  (nth simb-parseados (+ pos 1))
+  )
+
+(defn tipo [simb-parseados, pos]
+  (vector 'const (nth simb-parseados (+ pos 3)))
+  )
+
+(defn valor [simb-parseados, pos]
+  (nth simb-parseados (+ pos 5))
+  )
+
+(defn armar-terna-const [simb-parseados]
+  (let [pos (.indexOf simb-parseados 'const)]
+    (vector (identificador simb-parseados pos) (tipo simb-parseados pos) (valor simb-parseados pos))
+    )
+  )
+
+(defn modificar-contexto-con-const [context, terna]
+  (assoc context 1 (conj (nth context 1) terna))
+  )
+
 (defn cargar-const-en-tabla [amb]
   (if (= (estado amb) :sin-errores)
-    (println "cosas")
+    (let [context (contexto amb)]
+      (assoc amb 4 (modificar-contexto-con-const context (armar-terna-const (simb-ya-parseados amb))))
+      )
     amb
     )
   )
