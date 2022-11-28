@@ -129,6 +129,10 @@
 (declare generar-format!)
 (declare interpretar)
 
+(defn -main [& args]
+  (driver-loop)
+  )
+
 (defn driver-loop
   ([]
    (prn)
@@ -1737,8 +1741,6 @@
 ; JMP: Salto incondicional. Cambia cont-prg por el valor del argumento.
 ; JC: Salto condicional. Quita el ultimo valor de la pila. Si este es true, cambia cont-prg por el valor del argumento. Si no, incrementa cont-prg en 1.
 ; CAL: Llamada a una funcion. Agrega al final de regs-de-act el reg-de-act (proveniente de mapa-regs) indicado por el argumento, cambia cont-prg por el valor del argumento y coloca al final de la pila la direccion de retorno (el valor del argumento incrementado en 1).
-; RETN: Indica el retorno de la llamada a un procedimiento (no funcion). Llama recursivamente a interpretar con valores actualizados de regs-de-act (se elimina el ultimo de ellos), cont-prg (pasa a ser el ultimo valor en la pila) y pila (se quita de ella el nuevo cont-prg).
-; FLUSH: Purga la salida e incrementa cont-prg en 1.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn interpretar [cod regs-de-act cont-prg pila mapa-regs]
   (let [fetched (cod cont-prg),
@@ -2007,10 +2009,12 @@
             (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
       ; TOI: Incrementa cont-prg en 1, quita de la pila un elemento numerico, lo convierte a entero y lo coloca al final de la pila.
+      ;TODO: fix it, debe convertir a número no que sea número
       TOI (let [res (aplicar-operador-monadico numero-a-entero pila)]
             (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
       ; TOF: Incrementa cont-prg en 1, quita de la pila un elemento numerico, lo convierte a punto flotante y lo coloca al final de la pila.
+      ; TODO: idem TOI
       TOF (let [res (aplicar-operador-monadico numero-a-float pila)]
             (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
@@ -2030,6 +2034,16 @@
       ABS (let [res (aplicar-operador-monadico calcular-valor-absoluto pila)]
              (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
+      ; RETN: Indica el retorno de la llamada a un procedimiento (no funcion).
+      ; Llama recursivamente a interpretar con valores actualizados de regs-de-act (se elimina el ultimo de ellos),
+      ; cont-prg (pasa a ser el ultimo valor en la pila) y pila (se quita de ella el nuevo cont-prg).
+      RETN (recur cod (vec (butlast regs-de-act)) (last pila) (vec (drop-last 2 pila)) mapa-regs)
+
+      ; FLUSH: Purga la salida e incrementa cont-prg en 1.
+      FLUSH (do
+           (flush)
+           (recur cod regs-de-act (inc cont-prg) pila mapa-regs)
+           )
       )
     )
   )
@@ -2049,7 +2063,55 @@
 ;
 ; nil
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn listar )
+(defn es_tab? [str]
+  (= str "\t")
+  )
+
+(defn es_new_line? [str]
+  (= str "\n")
+  )
+
+(defn escapear-caracter-especial [c]
+  (cond
+    (es_tab? c) (char-escape-string \tab)
+    (es_new_line? c) (char-escape-string \newline)
+    :else c)
+  )
+
+(defn mantener-caracteres-especiales [cadena]
+  (apply str (map escapear-caracter-especial (map str (seq cadena))))
+  )
+
+(defn armar-string [token, tabs]
+  (cond
+    (= token (symbol "{")) (str "\n" (apply str (repeat tabs "  ")) token "\n")
+    (= token (symbol ";")) (str token "\n")
+    (= token (symbol "}")) (str "\n" (apply str  (repeat tabs "  ")) token "\n")
+    (string? token) (str "\"" (mantener-caracteres-especiales token) "\"" " ")
+    :else (str (apply str (repeat tabs "  ")) token " ")
+    )
+  )
+
+(defn tokens-a-string [tokens, tabs, nueva_linea]
+  (cond
+    (empty? tokens) ""
+    :else (let [h (first tokens)]
+            (cond
+              (= h (symbol "{")) (str (armar-string h tabs) (tokens-a-string (rest tokens) (inc tabs) true))
+              (= h (symbol "}")) (str (armar-string h (dec tabs)) (tokens-a-string (rest tokens) (dec tabs) true))              (= h (symbol "}")) (str (armar-string h (dec tabs)) (tokens-a-string (rest tokens) (dec tabs) true))
+              (= h (symbol ";")) (str (armar-string h 0) (tokens-a-string (rest tokens) tabs true))
+              :else (cond
+                      (true? nueva_linea) (str (armar-string h tabs) (tokens-a-string (rest tokens) tabs false))
+                      :else (str (armar-string h 0) (tokens-a-string (rest tokens) tabs false))
+                      )
+              )
+            )
+    )
+  )
+
+(defn listar [tokens]
+  (println (tokens-a-string tokens 0 false))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; AGREGAR-PTOCOMA: Recibe una lista con los tokens de un programa en Rust y la devuelve con un token ; insertado a continuacion de ciertas } (llaves de cierre, pero no a continuacion de todas ellas).

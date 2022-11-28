@@ -281,3 +281,16 @@
     (is (thrown-with-msg? Exception #"Tipo invalido" (calcular-valor-absoluto "0")))
     )
   )
+(deftest test-listar
+  (testing "tokens-a-string"
+    (is (= (tokens-a-string ['fn (symbol "(") 0] 0 false) "fn ( 0 "))
+    (is (= (tokens-a-string ['fn (symbol "{")] 0 false) "fn \n{\n"))
+    (is (= (tokens-a-string [(symbol ";")] 0 false) ";\n"))
+    (is (= (tokens-a-string [(symbol "}")] 1 false) "\n}\n"))
+    (is (= (tokens-a-string ["hola, mundo"] 1 false) "\"hola, mundo\" "))
+    (is (= (tokens-a-string ["f\t\tf\n"] 1 false) "\"f\\t\\tf\\n\" "))
+    (is (= (tokens-a-string ['fn (symbol "(") 0] 1 true) "  fn ( 0 "))
+    (is (= (tokens-a-string ['fn 'main (symbol "(") (symbol ")") (symbol "{") 'println! (symbol "(") "Hola, mundo!" (symbol ")") (symbol "}")] 0 false)
+           "fn main ( ) \n{\n  println! ( \"Hola, mundo!\" ) \n}\n"))
+    )
+  )
