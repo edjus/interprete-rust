@@ -2114,13 +2114,35 @@
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; AGREGAR-PTOCOMA: Recibe una lista con los tokens de un programa en Rust y la devuelve con un token ; insertado a continuacion de ciertas } (llaves de cierre, pero no a continuacion de todas ellas).
+; AGREGAR-PTOCOMA: Recibe una lista con los tokens de un programa en Rust y la devuelve con un token ; insertado a continuacion de ciertas }
+; (llaves de cierre, pero no a continuacion de todas ellas).
 ; Esto se debe a que los programas correctos de Rust no separan con ; las expresiones presentes dentro de un bloque cuando estas terminan en }.
 ; Por ejemplo:
 ; user=> (agregar-ptocoma (list 'fn 'main (symbol "(") (symbol ")") (symbol "{") 'if 'x '< '0 (symbol "{") 'x '= '- 'x (symbol ";") (symbol "}") 'renglon '= 'x (symbol ";") 'if 'z '< '0 (symbol "{") 'z '= '- 'z (symbol ";") (symbol "}") (symbol "}") 'fn 'foo (symbol "(") (symbol ")") (symbol "{") 'if 'y '> '0 (symbol "{") 'y '= '- 'y (symbol ";") (symbol "}") 'else (symbol "{") 'x '= '- 'y (symbol ";") (symbol "}") (symbol "}")))
 ; (fn main ( ) { if x < 0 { x = - x ; } ; renglon = x ; if z < 0 { z = - z ; } } fn foo ( ) { if y > 0 { y = - y ; } else { x = - y ; } })
+; (fn main ( ) { if x < 0 { x = - x ; } renglon = x ; if z < 0 { z = - z ; } } fn foo ( ) { if y > 0 { y = - y ; } else { x = - y ; } })
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn agregar-ptocoma )
+
+(defn es_llave_cierre? [s]
+  (= s (symbol "}"))
+  )
+
+(defn procesar-tokens [tokens]
+  (let [p (first tokens) s (second tokens)]
+    (cond
+      (nil? s) (list p)
+      (and (es_llave_cierre? p) (es_llave_cierre? s)) (conj (procesar-tokens (rest tokens)) p )
+      (and (es_llave_cierre? p) (= s 'else)) (conj (procesar-tokens (rest tokens)) p )
+      (and (es_llave_cierre? p) (= s 'fn)) (conj (procesar-tokens (rest tokens)) p )
+      (and (es_llave_cierre? p) (not (es_llave_cierre? s))) (conj (procesar-tokens (rest tokens)) (symbol ";") p )
+      :else (conj (procesar-tokens (rest tokens)) p)
+      )
+    )
+  )
+
+(defn agregar-ptocoma [tokens]
+    (procesar-tokens tokens)
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; PALABRA-RESERVADA?: Recibe un elemento y devuelve true si es una palabra reservada de Rust; si no, false.

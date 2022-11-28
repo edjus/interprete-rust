@@ -281,6 +281,7 @@
     (is (thrown-with-msg? Exception #"Tipo invalido" (calcular-valor-absoluto "0")))
     )
   )
+
 (deftest test-listar
   (testing "tokens-a-string"
     (is (= (tokens-a-string ['fn (symbol "(") 0] 0 false) "fn ( 0 "))
@@ -292,5 +293,17 @@
     (is (= (tokens-a-string ['fn (symbol "(") 0] 1 true) "  fn ( 0 "))
     (is (= (tokens-a-string ['fn 'main (symbol "(") (symbol ")") (symbol "{") 'println! (symbol "(") "Hola, mundo!" (symbol ")") (symbol "}")] 0 false)
            "fn main ( ) \n{\n  println! ( \"Hola, mundo!\" ) \n}\n"))
+    )
+  )
+
+(deftest test-agregar-ptcoma
+  (testing "procesar-tokens"
+    (is (= (procesar-tokens '(1 2)) '(1 2)))
+    (is (= (procesar-tokens '('fn 'io)) '('fn 'io)))
+    (is (= (procesar-tokens (list 'fn (symbol "}"))) (list 'fn (symbol "}"))))
+    (is (= (procesar-tokens (list (symbol "}") 'print)) (list (symbol "}") (symbol ";") 'print)))
+    (is (= (procesar-tokens (list (symbol "}") 'else)) (list (symbol "}") 'else)))
+     (is (= (procesar-tokens (list 'fn 'main (symbol "(") (symbol ")") (symbol "{") 'if 'x '< '0 (symbol "{") 'x '= '- 'x (symbol ";") (symbol "}") 'renglon '= 'x (symbol ";") 'if 'z '< '0 (symbol "{") 'z '= '- 'z (symbol ";") (symbol "}") (symbol "}") 'fn 'foo (symbol "(") (symbol ")") (symbol "{") 'if 'y '> '0 (symbol "{") 'y '= '- 'y (symbol ";") (symbol "}") 'else (symbol "{") 'x '= '- 'y (symbol ";") (symbol "}") (symbol "}")))
+           (list 'fn 'main (symbol "(") (symbol ")") (symbol "{") 'if 'x '< '0 (symbol "{") 'x '= '- 'x (symbol ";") (symbol "}") (symbol ";") 'renglon '= 'x (symbol ";") 'if 'z '< '0 (symbol "{") 'z '= '- 'z (symbol ";") (symbol "}") (symbol "}") 'fn 'foo (symbol "(") (symbol ")") (symbol "{") 'if 'y '> '0 (symbol "{") 'y '= '- 'y (symbol ";") (symbol "}") 'else (symbol "{") 'x '= '- 'y (symbol ";") (symbol "}") (symbol "}"))))
     )
   )
