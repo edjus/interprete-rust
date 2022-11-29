@@ -133,6 +133,10 @@
   (driver-loop)
   )
 
+(defn spy
+  ([x] (do (prn x) x))
+  ([msg x] (do (print msg) (print ": ") (prn x) x)))
+
 (defn driver-loop
   ([]
    (prn)
@@ -248,6 +252,7 @@
     56 "FALLO EN UNA OPERACION DIADICA"
     57 "FALLO INDICE INVALIDO EN LA COLECCION"
     58 "SE ESPERABA UN BOOLEANO"
+    59 "NO SE ENCONTRO VARIABLE"
     cod)
   )
 
@@ -372,7 +377,7 @@
   (if (= (estado amb) :sin-errores)
     (let [coincidencias (buscar-coincidencias amb)]
       (if (empty? coincidencias)
-        (dar-error amb 42)
+        (dar-error (spy "ERROR VERIFICAR QUE SEA" amb) 42)
         (fn-control amb coincidencias)))
     amb)
   )
@@ -488,7 +493,8 @@
         (procesar-opcional-declaraciones-use)
         (procesar-opcional-declaraciones-const)
         (procesar-declaraciones-fn)
-        (preparar-mapa-regs-de-act))
+        (preparar-mapa-regs-de-act)
+        )
     amb)
   )
 
@@ -1736,11 +1742,6 @@
 ; LA SIGUIENTE FUNCION DEBERA SER COMPLETADA PARA QUE ANDE EL INTERPRETE DE RUST
 ; FALTAN IMPLEMENTAR (todas como llamados recursivos a la funcion interpretar, con recur y argumentos actualizados):
 ;
-; PUSHFI: PUSH FROM INSTRUCTION. Direccionamiento inmediato. Incrementa cont-prg en 1 y agrega al final de pila el valor del argumento.
-; PUSHFM: PUSH FROM MEMORY. Direccionamiento directo. Incrementa cont-prg en 1 y agrega al final de pila el elemento ubicado en la posicion de reg-actual indicada por el valor del argumento.
-; JMP: Salto incondicional. Cambia cont-prg por el valor del argumento.
-; JC: Salto condicional. Quita el ultimo valor de la pila. Si este es true, cambia cont-prg por el valor del argumento. Si no, incrementa cont-prg en 1.
-; CAL: Llamada a una funcion. Agrega al final de regs-de-act el reg-de-act (proveniente de mapa-regs) indicado por el argumento, cambia cont-prg por el valor del argumento y coloca al final de la pila la direccion de retorno (el valor del argumento incrementado en 1).
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn interpretar [cod regs-de-act cont-prg pila mapa-regs]
   (let [fetched (cod cont-prg),
@@ -2044,6 +2045,32 @@
            (flush)
            (recur cod regs-de-act (inc cont-prg) pila mapa-regs)
            )
+
+      ; PUSHFI: PUSH FROM INSTRUCTION.
+      ; Direccionamiento inmediato.
+      ; Incrementa cont-prg en 1 y agrega al final de pila el valor del argumento.
+      PUSHFI (recur cod regs-de-act (inc cont-prg) (conj pila (last fetched)) mapa-regs )
+
+      ; PUSHFM: PUSH FROM MEMORY.
+      ; Direccionamiento directo.
+      ; Incrementa cont-prg en 1 y agrega al final de pila el elemento ubicado en la posicion de reg-actual indicada por el valor del argumento.
+      PUSHFM (recur cod regs-de-act (inc cont-prg) (conj pila (last (nth regs-de-act (last fetched)))) mapa-regs)
+
+      ; JMP: Salto incondicional.
+      ; Cambia cont-prg por el valor del argumento.
+      JMP (recur cod regs-de-act (last fetched) pila mapa-regs)
+
+      ; JC: Salto condicional.
+      ; Quita el ultimo valor de la pila. Si este es true, cambia cont-prg por el valor del argumento. Si no, incrementa cont-prg en 1.
+      JC (recur cod regs-de-act (if (last pila) (last fetched) (inc cont-prg)) (butlast pila) mapa-regs)
+
+      ; CAL: Llamada a una funcion.
+      ; Agrega al final de regs-de-act el reg-de-act (proveniente de mapa-regs) indicado por el argumento,
+      ; cambia cont-prg por el valor del argumento y
+      ; coloca al final de la pila la direccion de retorno (el valor del argumento incrementado en 1).
+      ;TODO: Validar que este bien
+      CAL (recur cod (conj regs-de-act (get mapa-regs (last fetched)) ) (last fetched) (conj pila (inc cont-prg)) mapa-regs)
+
       )
     )
   )
@@ -2134,6 +2161,7 @@
       (and (es_llave_cierre? p) (es_llave_cierre? s)) (conj (procesar-tokens (rest tokens)) p )
       (and (es_llave_cierre? p) (= s 'else)) (conj (procesar-tokens (rest tokens)) p )
       (and (es_llave_cierre? p) (= s 'fn)) (conj (procesar-tokens (rest tokens)) p )
+      (and (es_llave_cierre? p) (= s (symbol ")"))) (conj (procesar-tokens (rest tokens)) p )
       (and (es_llave_cierre? p) (not (es_llave_cierre? s))) (conj (procesar-tokens (rest tokens)) (symbol ";") p )
       :else (conj (procesar-tokens (rest tokens)) p)
       )
@@ -2156,7 +2184,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn palabra-reservada? [word]
   (contains?
-    (hash-set 'io 'Write 'process 'mut 'exit 'expect 'flush 'read_line 'chars 'nth 'unwrap 'fn)
+    (hash-set 'io 'Write 'process 'mut 'exit 'expect 'flush 'read_line 'chars 'nth 'unwrap 'fn 'as
+              'break 'const 'continue 'crate 'else 'if 'enum 'for 'let 'loop 'match 'mod 'move 'mut
+              'pub 'impl 'ref 'return 'static 'struct 'type 'unsafe 'where 'while 'do 'final 'proc
+              'sizeof 'typeof 'unsized 'virtual 'yield 'bool 'stdin 'stdout 'String 'sqrt 'abs 'atan)
     word
   )
 )
@@ -2174,10 +2205,11 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn identificador? [word]
-  (contains?
-    (hash-set 'boolean 'e120) word
+  (cond
+    (palabra-reservada? word) false
+    :else (not (nil? (re-matches #"^[aA-zZ]\w*" (str word))))
+    )
   )
-)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; DUMP: Recibe un vector con instrucciones de la RI y las imprime numeradas a partir de 0. Siempre devuelve nil.
@@ -2392,9 +2424,32 @@
 ; [) (; println! ( "{}" , v ) ; }) [fn inc ( v : & mut i64 ) { * v += 1 ; } fn main ( ) { let mut v : i64 = 5 ; inc ( & mut v] :sin-errores [[0 2] [[inc [fn [([v : & mut i64]) ()]] 2] [main [fn [() ()]] 6] [v [var-mut i64] 0]]] 1 [[CAL 6] HLT [POPARG 0] [PUSHFI 1] [POPADDREF 0] RETN [PUSHFI 5] [POP 0] [PUSHADDR 0]] [[2 [i64 nil]] [6 [i64 nil]]]]
 ;                                                                                                                           ^  ^^^^^^^^^^^^                                                                    ^^^^^^^^^^^^^^^^^                                                                               ^^^^^^^^^^^^
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn generar-ref
+(defn encontrar-ultima-terna [name_var, ternas]
+  (let [terna (last ternas)]
+    (cond
+      (empty? ternas) nil
+      (= name_var (first terna)) terna
+      :else (recur name_var (butlast ternas))
+    )
+    )
+  )
 
-; )
+(defn encontrar-direccion [simb_par, ctx]
+  (cond
+    (nil? (encontrar-ultima-terna (last simb_par) (second ctx)))
+    (do (print "ERROR: ") (println (buscar-mensaje 59) nil))
+    :else (last (encontrar-ultima-terna (last simb_par) (second ctx)))
+    )
+  )
+
+(defn generar-ref [amb]
+  (if (= (estado amb) :sin-errores)
+    (let [sp (simb-ya-parseados amb) ctx (contexto amb) bc (bytecode amb)]
+      (assoc amb 6 (conj bc ['PUSHADDR (encontrar-direccion sp ctx)]))
+      )
+    amb
+    )
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; FIXUP: Recibe un ambiente y la ubicacion de un JMP ? a corregir en el vector de bytecode. Si el estado no es
@@ -2408,9 +2463,14 @@
 ; [{ (x = 20 ; } ; println! ( "{}" , x ) }) [fn main ( ) { let x : i64 ; if false { x = 10 ; } else] :sin-errores [[0 1 2] [[main [fn [() ()]] 2] [x [var-inmut i64] 0]]] 1 [[CAL 2] HLT [PUSHFI false] [JC 5] [JMP 8] [PUSHFI 10] [POP 0] [JMP ?]] [[2 [i64 nil]]]]
 ;                                                                                                    ^^^^^^^^^^^^                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^: tamano 8                                                                                                                                                                                                                                        ^ ubicacion de JMP ? en contexto
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn fixup
-
-; )
+ (defn fixup [amb pos]
+   (if (= (estado amb) :sin-errores)
+     (let [bc (bytecode amb)]
+       (assoc amb 6 (assoc bc pos ['JMP (count bc)]))
+       )
+     amb
+     )
+   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; CONVERTIR-FORMATO-IMPRESION: Recibe una lista con los argumentos de print! de Rust y devuelve una lista con los
