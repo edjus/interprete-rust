@@ -361,10 +361,8 @@
     )
 
   (testing "procesar-formato"
-    (is (= (procesar-formato '("hola" "{}") '(1) 0) '("hola" "%d")))
-    (is (= (procesar-formato '("hola" "{}") '("F") 0) '("hola" "%s")))
-    (is (= (procesar-formato '("hola" "{}") '(2.0) 0) '("hola" "%.0f")))
-    (is (= (procesar-formato '("hola" "{}" "," "\n") '(2.0) 0) '("hola" "%.0f" "," "\n")))
+    (is (= (procesar-formato '("{}-f3" "," "\n") '(2.0) 0) '("%.6f-f3" "," "\n")))
+    (is (= (procesar-formato '("{:.8}-\t" "," "\n") '(2.0) 0) '("%.8f-\t" "," "\n")))
     )
 
   (testing "convertir-formato-impresion"
@@ -373,6 +371,8 @@
     (is (= (convertir-formato-impresion '("- My name is {}, James {}.\n- Hello, {}{}{}!" "Bond" "Bond" 0 0 7))
            '("- My name is %s, James %s.\n- Hello, %d%d%d!" "Bond" "Bond" 0 0 7)))
     (is (= (convertir-formato-impresion '("{}\t{}" 0 "0")) '("%d\t%s" 0 "0")))
+    (is (= (convertir-formato-impresion '("Las raices cuadradas de {} son +{:.8} y -{:.8}" 4.0 1.999999999985448 1.999999999985448))
+           '("Las raices cuadradas de %.6f son +%.8f y -%.8f" 4.0 1.999999999985448 1.999999999985448)))
     )
   )
 

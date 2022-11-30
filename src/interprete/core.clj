@@ -2029,12 +2029,10 @@
             (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
       ; TOI: Incrementa cont-prg en 1, quita de la pila un elemento numerico, lo convierte a entero y lo coloca al final de la pila.
-      ;TODO: fix it, debe convertir a número no que sea número
       TOI (let [res (aplicar-operador-monadico numero-a-entero pila)]
             (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
       ; TOF: Incrementa cont-prg en 1, quita de la pila un elemento numerico, lo convierte a punto flotante y lo coloca al final de la pila.
-      ; TODO: idem TOI
       TOF (let [res (aplicar-operador-monadico numero-a-float pila)]
             (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
@@ -2087,7 +2085,6 @@
       ; Agrega al final de regs-de-act el reg-de-act (proveniente de mapa-regs) indicado por el argumento,
       ; cambia cont-prg por el valor del argumento y
       ; coloca al final de la pila la direccion de retorno (el valor del argumento incrementado en 1).
-      ;TODO: Validar que este bien
       CAL (recur cod (conj regs-de-act (get mapa-regs (last fetched)) ) (last fetched) (conj pila (inc cont-prg)) mapa-regs)
 
       )
@@ -2249,7 +2246,6 @@
 ; 0 nil
 ; nil
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; TODO: Search how testing
 (defn dump [vector]
    (cond
      (nil? vector) (println 0 nil)
@@ -2508,7 +2504,7 @@
 (defn cant-decimales [fmt]
   (let [cant (last (re-find #"\{\:\.(\d)\}" fmt))]
     (cond
-      (nil? cant) 0
+      (nil? cant) 6
       :else cant
       )
     )
@@ -2518,7 +2514,7 @@
   (cond
     (string? valor) (fnreplace formato #"\{\}" "%s")
     (int? valor) (fnreplace formato #"\{\}" "%d")
-    (float? valor) (str "%." (cant-decimales formato) "f")
+    (float? valor) (fnreplace formato #"\{(:.\d)?\}" (str "%." (cant-decimales formato) "f"))
     )
   )
 
@@ -2562,7 +2558,6 @@
     )
   )
 
-; TODO: Arreglar solo funciona cuándo los fmt están solos
 (defn convertir-formato-impresion [args]
   (let [valores (rest args)]
     (cond
