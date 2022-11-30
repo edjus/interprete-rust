@@ -377,7 +377,7 @@
   (if (= (estado amb) :sin-errores)
     (let [coincidencias (buscar-coincidencias amb)]
       (if (empty? coincidencias)
-        (dar-error (spy "ERROR VERIFICAR QUE SEA" amb) 42)
+        (dar-error amb 42)
         (fn-control amb coincidencias)))
     amb)
   )
@@ -1697,16 +1697,18 @@
   )
 
 (defn numero-a-entero [val]
-  (if (numero? val)
-    (int val)
-    (do (print "ERROR: ") (println (buscar-mensaje 39)) (throw (Exception. "Tipo invalido")))
+  (cond
+    (numero? val) (int val)
+    (string? val) (Integer/parseInt val)
+    :else (do (print "ERROR: ") (println (buscar-mensaje 39)) (throw (Exception. "Tipo invalido")))
     )
   )
 
 (defn numero-a-float [val]
-  (if (numero? val)
-    (float val)
-    (do (print "ERROR: ") (println (buscar-mensaje 39)) (throw (Exception. "Tipo invalido")))
+  (cond
+    (numero? val) (float val)
+    (string? val) (Double/parseDouble val)
+    :else (do (print "ERROR: ") (println (buscar-mensaje 39)) (throw (Exception. "Tipo invalido")))
     )
   )
 
@@ -1738,13 +1740,26 @@
     (do (print "ERROR: ") (println (buscar-mensaje 39)) (throw (Exception. "Tipo invalido")))
     )
   )
+
+(defn get-char-from-string [txt, pos]
+  (get txt pos)
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; LA SIGUIENTE FUNCION DEBERA SER COMPLETADA PARA QUE ANDE EL INTERPRETE DE RUST
 ; FALTAN IMPLEMENTAR (todas como llamados recursivos a la funcion interpretar, con recur y argumentos actualizados):
 ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn interpretar [cod regs-de-act cont-prg pila mapa-regs]
-  (let [fetched (cod cont-prg),
+  (do
+    ;(prn "=============")
+    ;(spy "REGS-ACT" regs-de-act)
+    ;(spy "REG-ACTUAL" (last regs-de-act))
+    ;(spy "CONT-PRG" cont-prg)
+    ;(spy "FETCHED" (cod cont-prg))
+    ;(spy "PILA" pila)
+
+  (let [fetched  (cod cont-prg),
         opcode (if (symbol? fetched) fetched (first fetched)),
         reg-actual (last regs-de-act)]
     (case opcode
@@ -1999,7 +2014,11 @@
            (recur cod regs-de-act (inc cont-prg) pila mapa-regs)
            )
 
-      ; CHR: Incrementa cont-prg en 1, quita de la pila dos elementos (un string y un indice), selecciona el char del string indicado por el indice y lo coloca al final de la pila.
+      ; CHR: Incrementa cont-prg en 1,
+      ; quita de la pila dos elementos (un string y un indice),
+      ; selecciona el char del string indicado por el indice y lo coloca al final de la pila.
+      CHR (let [res (aplicar-operador-diadico get-char-from-string pila)]
+            (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
       ; NEG: Incrementa cont-prg en 1, quita de la pila un elemento numerico, le cambia el signo y lo coloca al final de la pila.
       NEG (let [res (aplicar-operador-monadico cambiar-signo pila)]
@@ -2038,7 +2057,7 @@
       ; RETN: Indica el retorno de la llamada a un procedimiento (no funcion).
       ; Llama recursivamente a interpretar con valores actualizados de regs-de-act (se elimina el ultimo de ellos),
       ; cont-prg (pasa a ser el ultimo valor en la pila) y pila (se quita de ella el nuevo cont-prg).
-      RETN (recur cod (vec (butlast regs-de-act)) (last pila) (vec (drop-last 2 pila)) mapa-regs)
+      RETN (recur cod (vec (butlast regs-de-act)) (last pila) (vec (drop-last pila)) mapa-regs)
 
       ; FLUSH: Purga la salida e incrementa cont-prg en 1.
       FLUSH (do
@@ -2054,7 +2073,7 @@
       ; PUSHFM: PUSH FROM MEMORY.
       ; Direccionamiento directo.
       ; Incrementa cont-prg en 1 y agrega al final de pila el elemento ubicado en la posicion de reg-actual indicada por el valor del argumento.
-      PUSHFM (recur cod regs-de-act (inc cont-prg) (conj pila (last (nth regs-de-act (last fetched)))) mapa-regs)
+      PUSHFM (recur cod regs-de-act (inc cont-prg) (conj pila (last (nth reg-actual (last fetched)))) mapa-regs)
 
       ; JMP: Salto incondicional.
       ; Cambia cont-prg por el valor del argumento.
@@ -2062,7 +2081,7 @@
 
       ; JC: Salto condicional.
       ; Quita el ultimo valor de la pila. Si este es true, cambia cont-prg por el valor del argumento. Si no, incrementa cont-prg en 1.
-      JC (recur cod regs-de-act (if (last pila) (last fetched) (inc cont-prg)) (butlast pila) mapa-regs)
+      JC (recur cod regs-de-act (if (last pila) (last fetched) (inc cont-prg)) (vec (butlast pila)) mapa-regs)
 
       ; CAL: Llamada a una funcion.
       ; Agrega al final de regs-de-act el reg-de-act (proveniente de mapa-regs) indicado por el argumento,
@@ -2073,7 +2092,8 @@
 
       )
     )
-  )
+  )    )
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; LAS FUNCIONES QUE SIGUEN DEBERAN SER IMPLEMENTADAS PARA QUE ANDE EL INTERPRETE DE RUST
@@ -2485,7 +2505,72 @@
 ; user=> (convertir-formato-impresion '("Las raices cuadradas de {} son +{:.8} y -{:.8}" 4.0 1.999999999985448 1.999999999985448))
 ; ("Las raices cuadradas de %.0f son +%.8f y -%.8f" 4.0 1.999999999985448 1.999999999985448)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn convertir-formato-impresion )
+(defn cant-decimales [fmt]
+  (let [cant (last (re-find #"\{\:\.(\d)\}" fmt))]
+    (cond
+      (nil? cant) 0
+      :else cant
+      )
+    )
+  )
+
+(defn encontrar-tipo-formato [fnreplace, formato, valor]
+  (cond
+    (string? valor) (fnreplace formato #"\{\}" "%s")
+    (int? valor) (fnreplace formato #"\{\}" "%d")
+    (float? valor) (str "%." (cant-decimales formato) "f")
+    )
+  )
+
+(defn cantidad-fmt [txt]
+  (count (re-seq #"\{" txt))
+  )
+
+(defn slice-seq [coll, start, end]
+  (seq (subvec (vec coll) start end))
+  )
+
+(defn reemplazar-formatos [txt, valores, cant]
+  (cond
+    (= cant 0) (str txt)
+    :else (reemplazar-formatos
+            (encontrar-tipo-formato clojure.string/replace-first txt (nth valores (- (count valores) cant)))
+            valores
+            (dec cant)
+            )
+    )
+  )
+
+(defn procesar-formato [palabras, valores, pos]
+  (let [h (first palabras) t (rest palabras)]
+    (cond
+      (= (count palabras) 0) ()
+      :else (let [cant_fmts (cantidad-fmt h)]
+              (if (= cant_fmts 0)
+                (conj (procesar-formato t valores pos) h)
+                (conj (procesar-formato t valores (+ pos cant_fmts))
+                      (reemplazar-formatos h (slice-seq valores pos (+ pos cant_fmts)) cant_fmts))
+                )
+              )
+      )
+    )
+  )
+
+(defn transformar-formato [formato, valores]
+  (let [palabras (re-seq #"[^ ]+" formato)]
+    (clojure.string/join " " (procesar-formato palabras valores 0))
+    )
+  )
+
+; TODO: Arreglar solo funciona cuándo los fmt están solos
+(defn convertir-formato-impresion [args]
+  (let [valores (rest args)]
+    (cond
+      (= (count args) 1) args
+      :else (conj valores (transformar-formato (first args)  valores))
+      )
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; DIVIDIR: Recibe dos numeros y devuelve su cociente, manteniendo su tipo.
@@ -2537,7 +2622,18 @@
 ; user=> (compatibles? 'char ['a])
 ; true
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; (defn compatibles? )
+(defn compatibles? [rust_symb, clj_value]
+  (cond
+    (vector? clj_value) true
+    (= rust_symb 'i64) (int? clj_value)
+    (= rust_symb 'f64) (float? clj_value)
+    (= rust_symb 'String) (string? clj_value)
+    (= rust_symb 'bool) (boolean? clj_value)
+    (= rust_symb 'char) (char? clj_value)
+    (= rust_symb 'usize) (and (int? clj_value) (>= clj_value 0))
+    :else false
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; PASAR-A-INT: Recibe un elemento. Si puede devolverlo expresado como un entero, lo hace. Si no, lo devuelve intacto.

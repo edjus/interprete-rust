@@ -202,7 +202,6 @@
     (is (= (restaurar-contexto-anterior ['EOF () ['fn 'main (symbol "(") (symbol ")") (symbol "{") 'let 'x (symbol ":") 'i64 (symbol "=") 10 (symbol ";") 'let 'y (symbol ":") 'i64 (symbol "=") 20 (symbol ";") 'println! (symbol "(") "{}" (symbol ",") 'x '+ 'y (symbol ")") (symbol "}")] :sin-errores [[0 1] [['main ['fn [() ()]] 2] ['x ['var-inmut 'i64] 0] ['y ['var-inmut 'i64] 1]]] 2 [['CAL 2] 'HLT ['PUSHFI 10] ['POP 0] ['PUSHFI 20] ['POP 1] ['PUSHFI "{}"] ['PUSHFM 0] ['PUSHFM 1] 'ADD ['PUSHFI 2] 'OUT 'NL] [[2 ['i64 nil] ['i64 nil]]]])
            ['EOF () ['fn 'main (symbol "(") (symbol ")") (symbol "{") 'let 'x (symbol ":") 'i64 (symbol "=") 10 (symbol ";") 'let 'y (symbol ":") 'i64 (symbol "=") 20 (symbol ";") 'println! (symbol "(") "{}" (symbol ",") 'x '+ 'y (symbol ")") (symbol "}")] :sin-errores [[0] [['main ['fn [() ()]] 2]]] 2 [['CAL 2] 'HLT ['PUSHFI 10] ['POP 0] ['PUSHFI 20] ['POP 1] ['PUSHFI "{}"] ['PUSHFM 0] ['PUSHFM 1] 'ADD ['PUSHFI 2] 'OUT 'NL] [[2 ['i64 nil] ['i64 nil]]]]))
     )
-
   )
 
 (deftest test-buscar-tipo-de-retorno
@@ -240,19 +239,19 @@
     (is (thrown-with-msg? Exception #"Tipo invalido" (negar-booleano 'i)))
     )
 
-  (testing "numero a entero"
-    (is (= (numero-a-entero 5.1) 5))
-    (is (= (numero-a-entero -3) -3))
+  (testing "parse a entero"
+    (is (= (numero-a-entero "5") 5))
+    (is (= (numero-a-entero "-3") -3))
     (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-entero false)))
-    (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-entero "2")))
     (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-entero 'e2)))
     )
 
-  (testing "numero a float"
+  (testing "parse a float"
     (is (= (numero-a-float 4) 4.0))
     (is (= (numero-a-float -1.0) -1.0))
+    (is (= (numero-a-float "-1.2") -1.2))
+    (is (= (numero-a-float "0.5") 0.5))
     (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-float false)))
-    (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-float "2")))
     (is (thrown-with-msg? Exception #"Tipo invalido" (numero-a-float 'e2)))
     )
 
@@ -284,6 +283,10 @@
     (is (= (calcular-valor-absoluto 0) 0))
     (is (thrown-with-msg? Exception #"Tipo invalido" (calcular-valor-absoluto false)))
     (is (thrown-with-msg? Exception #"Tipo invalido" (calcular-valor-absoluto "0")))
+    )
+
+  (testing "get char from string"
+    (is (= (get-char-from-string "1023F2" 2) \2))
     )
   )
 
@@ -345,5 +348,51 @@
     (is (= (generar-ref [(symbol ")") (list (symbol ";") 'println! (symbol "(") "{}" (symbol ",") 'v (symbol ")") (symbol ";") (symbol "}")) ['fn 'inc (symbol "(") 'v (symbol ":") (symbol "&") 'mut 'i64 (symbol ")") (symbol "{") '* 'v (symbol "+=") 1 (symbol ";") (symbol "}") 'fn 'main (symbol "(") (symbol ")") (symbol "{") 'let 'mut 'v (symbol ":") 'i64 (symbol "=") 5 (symbol ";") 'inc (symbol "(") (symbol "&") 'mut 'v] :sin-errores [[0 2] [['inc ['fn [(list ['v (symbol ":") (symbol "&") 'mut 'i64]) ()]] 2] ['main ['fn [() ()]] 6] ['v ['var-mut 'i64] 0]]] 1 [['CAL 6] 'HLT ['POPARG 0] ['PUSHFI 1] ['POPADDREF 0] 'RETN ['PUSHFI 5] ['POP 0]] [[2 ['i64 nil]] [6 ['i64 nil]]]])
            [(symbol ")") (list (symbol ";") 'println! (symbol "(") "{}" (symbol ",") 'v (symbol ")") (symbol ";") (symbol "}")) ['fn 'inc (symbol "(") 'v (symbol ":") (symbol "&") 'mut 'i64 (symbol ")") (symbol "{") '* 'v (symbol "+=") 1 (symbol ";") (symbol "}") 'fn 'main (symbol "(") (symbol ")") (symbol "{") 'let 'mut 'v (symbol ":") 'i64 (symbol "=") 5 (symbol ";") 'inc (symbol "(") (symbol "&") 'mut 'v] :sin-errores [[0 2] [['inc ['fn [(list ['v (symbol ":") (symbol "&") 'mut 'i64]) ()]] 2] ['main ['fn [() ()]] 6] ['v ['var-mut 'i64] 0]]] 1 [['CAL 6] 'HLT ['POPARG 0] ['PUSHFI 1] ['POPADDREF 0] 'RETN ['PUSHFI 5] ['POP 0] ['PUSHADDR 0]] [[2 ['i64 nil]] [6 ['i64 nil]]]]))
 
+    )
+  )
+
+(deftest test-convertir-formato-impresion
+
+
+  (testing "cantidad-formatos"
+    (is (= (cantidad-fmt "{}") 1))
+    (is (= (cantidad-fmt "{:.8}\t{}") 2))
+    (is (= (cantidad-fmt "io") 0))
+    )
+
+  (testing "procesar-formato"
+    (is (= (procesar-formato '("hola" "{}") '(1) 0) '("hola" "%d")))
+    (is (= (procesar-formato '("hola" "{}") '("F") 0) '("hola" "%s")))
+    (is (= (procesar-formato '("hola" "{}") '(2.0) 0) '("hola" "%.0f")))
+    (is (= (procesar-formato '("hola" "{}" "," "\n") '(2.0) 0) '("hola" "%.0f" "," "\n")))
+    )
+
+  (testing "convertir-formato-impresion"
+    (is (= (convertir-formato-impresion '("Hola, mundo!"))
+           '("Hola, mundo!")))
+    (is (= (convertir-formato-impresion '("- My name is {}, James {}.\n- Hello, {}{}{}!" "Bond" "Bond" 0 0 7))
+           '("- My name is %s, James %s.\n- Hello, %d%d%d!" "Bond" "Bond" 0 0 7)))
+    (is (= (convertir-formato-impresion '("{}\t{}" 0 "0")) '("%d\t%s" 0 "0")))
+    )
+  )
+
+
+(deftest test-compatibles?
+  (testing "compatible"
+    (is (= (compatibles? 'i64 5) true))
+    (is (= (compatibles? 'i64 [5.0]) true))
+    (is (= (compatibles? 'String "Hola") true))
+    (is (= (compatibles? 'bool true) true))
+    (is (= (compatibles? 'usize 1) true))
+    (is (= (compatibles? 'char \a) true))
+    (is (= (compatibles? 'char ['a]) true))
+    )
+
+  (testing "no compatible"
+    (is (= (compatibles? 'i64 5.0) false))
+    (is (= (compatibles? 'bool 1) false))
+    (is (= (compatibles? 'String "Hola")))
+    (is (= (compatibles? 'usize "1") false))
+    (is (= (compatibles? 'char 'a)))
     )
   )
