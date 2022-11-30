@@ -29,7 +29,6 @@
     )
 )
 
-; TODO: ver que hay que validar
 (deftest test-identificador?
   (testing "Should be identificador"
     (is (= true (identificador? 'boolean)))
@@ -352,8 +351,6 @@
   )
 
 (deftest test-convertir-formato-impresion
-
-
   (testing "cantidad-formatos"
     (is (= (cantidad-fmt "{}") 1))
     (is (= (cantidad-fmt "{:.8}\t{}") 2))
@@ -363,6 +360,9 @@
   (testing "procesar-formato"
     (is (= (procesar-formato '("{}-f3" "," "\n") '(2.0) 0) '("%.6f-f3" "," "\n")))
     (is (= (procesar-formato '("{:.8}-\t" "," "\n") '(2.0) 0) '("%.8f-\t" "," "\n")))
+    (is (= (procesar-formato '(" {}") '(3) 0) '(" %d")))
+    (is (= (procesar-formato '(" {}") '(\a) 0) '(" %s")))
+
     )
 
   (testing "convertir-formato-impresion"

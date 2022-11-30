@@ -1945,7 +1945,6 @@
             (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
       ; MOD: Como ADD, pero calcula el resto de la division.
-      ;TODO: ver si rem se comporta como el resto de rust si es necesario
       MOD (let [res (aplicar-operador-diadico rem pila)]
             (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
@@ -1994,7 +1993,6 @@
                (if (nil? res) res (recur cod res (inc cont-prg) (vec (butlast pila)) mapa-regs)))
 
       ; POPMOD: Como POPADD, pero calcula el resto de la division.
-      ; TODO: ver si rem funciona
       POPMOD (let [res (asignar-aritmetico regs-de-act pila reg-actual fetched rem)]
                (if (nil? res) res (recur cod res (inc cont-prg) (vec (butlast pila)) mapa-regs)))
 
@@ -2011,7 +2009,6 @@
                   (if (nil? res) res (recur cod res (inc cont-prg) (vec (butlast pila)) mapa-regs)))
 
       ; POPMODREF: Como POPADDREF, pero calcula el resto de la division.
-      ;TODO: ver si rem funciona
       POPMODREF (let [res (asignar-aritmetico-ref regs-de-act pila reg-actual fetched rem)]
                   (if (nil? res) res (recur cod res (inc cont-prg) (vec (butlast pila)) mapa-regs)))
 
@@ -2211,7 +2208,7 @@
     (hash-set 'io 'Write 'process 'mut 'exit 'expect 'flush 'read_line 'chars 'nth 'unwrap 'fn 'as
               'break 'const 'continue 'crate 'else 'if 'enum 'for 'let 'loop 'match 'mod 'move 'mut
               'pub 'impl 'ref 'return 'static 'struct 'type 'unsafe 'where 'while 'do 'final 'proc
-              'sizeof 'typeof 'unsized 'virtual 'yield 'bool 'stdin 'stdout 'String 'sqrt 'abs 'atan)
+              'sizeof 'typeof 'unsized 'virtual 'yield 'bool 'stdin 'stdout 'String 'sqrt 'abs 'atan 'f64)
     word
   )
 )
@@ -2520,6 +2517,7 @@
 (defn encontrar-tipo-formato [fnreplace, formato, valor]
   (cond
     (string? valor) (fnreplace formato #"\{\}" "%s")
+    (char? valor) (fnreplace formato #"\{\}" "%s")
     (int? valor) (fnreplace formato #"\{\}" "%d")
     (float? valor) (fnreplace formato #"\{(:.\d)?\}" (str "%." (cant-decimales formato) "f"))
     )
