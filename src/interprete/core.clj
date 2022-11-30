@@ -1745,6 +1745,13 @@
   (get txt pos)
   )
 
+(defn dividir-segun-tipo [num, div]
+  (cond
+    (int? num) (int (/ num div))
+    (float? num) (float (/ num div))
+    :else nil
+    )
+  )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; LA SIGUIENTE FUNCION DEBERA SER COMPLETADA PARA QUE ANDE EL INTERPRETE DE RUST
 ; FALTAN IMPLEMENTAR (todas como llamados recursivos a la funcion interpretar, con recur y argumentos actualizados):
@@ -1983,7 +1990,7 @@
                (if (nil? res) res (recur cod res (inc cont-prg) (vec (butlast pila)) mapa-regs)))
 
       ; POPDIV: Como POPADD, pero divide.
-      POPDIV (let [res (asignar-aritmetico regs-de-act pila reg-actual fetched /)]
+      POPDIV (let [res (asignar-aritmetico regs-de-act pila reg-actual fetched dividir-segun-tipo)]
                (if (nil? res) res (recur cod res (inc cont-prg) (vec (butlast pila)) mapa-regs)))
 
       ; POPMOD: Como POPADD, pero calcula el resto de la division.

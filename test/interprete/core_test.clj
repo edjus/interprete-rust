@@ -374,25 +374,23 @@
     (is (= (convertir-formato-impresion '("Las raices cuadradas de {} son +{:.8} y -{:.8}" 4.0 1.999999999985448 1.999999999985448))
            '("Las raices cuadradas de %.6f son +%.8f y -%.8f" 4.0 1.999999999985448 1.999999999985448)))
     )
-  )
 
+  (deftest test-compatibles?
+    (testing "compatible"
+      (is (= (compatibles? 'i64 5) true))
+      (is (= (compatibles? 'i64 [5.0]) true))
+      (is (= (compatibles? 'String "Hola") true))
+      (is (= (compatibles? 'bool true) true))
+      (is (= (compatibles? 'usize 1) true))
+      (is (= (compatibles? 'char \a) true))
+      (is (= (compatibles? 'char ['a]) true))
+      )
 
-(deftest test-compatibles?
-  (testing "compatible"
-    (is (= (compatibles? 'i64 5) true))
-    (is (= (compatibles? 'i64 [5.0]) true))
-    (is (= (compatibles? 'String "Hola") true))
-    (is (= (compatibles? 'bool true) true))
-    (is (= (compatibles? 'usize 1) true))
-    (is (= (compatibles? 'char \a) true))
-    (is (= (compatibles? 'char ['a]) true))
-    )
-
-  (testing "no compatible"
-    (is (= (compatibles? 'i64 5.0) false))
-    (is (= (compatibles? 'bool 1) false))
-    (is (= (compatibles? 'String "Hola")))
-    (is (= (compatibles? 'usize "1") false))
-    (is (= (compatibles? 'char 'a)))
-    )
-  )
+    (testing "no compatible"
+      (is (= (compatibles? 'i64 5.0) false))
+      (is (= (compatibles? 'bool 1) false))
+      (is (= (compatibles? 'String "Hola")))
+      (is (= (compatibles? 'usize "1") false))
+      (is (= (compatibles? 'char 'a)))
+      )
+    ))
