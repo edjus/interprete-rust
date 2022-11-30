@@ -2506,7 +2506,7 @@
 ; ("Las raices cuadradas de %.0f son +%.8f y -%.8f" 4.0 1.999999999985448 1.999999999985448)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn cant-decimales [fmt]
-  (let [cant (last (re-find #"\{\:\.(\d)\}" fmt))]
+  (let [cant (last (re-find #"\{(\:\.(\d))?\}" fmt))]
     (cond
       (nil? cant) 6
       :else cant
@@ -2557,18 +2557,10 @@
     )
   )
 
-(defn transformar-formato [formato, valores]
-  (let [palabras (re-seq #"[^ ]+" formato)]
-    (clojure.string/join " " (procesar-formato palabras valores 0))
-    )
-  )
-
 (defn convertir-formato-impresion [args]
-  (let [valores (rest args)]
-    (cond
-      (= (count args) 1) args
-      :else (conj valores (transformar-formato (first args)  valores))
-      )
+  (cond
+    (= (count args) 1) args
+    :else (conj (rest args) (first (procesar-formato (list (first args))  (rest args) 0)))
     )
   )
 
