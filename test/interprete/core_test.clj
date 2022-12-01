@@ -1,6 +1,7 @@
 (ns interprete.core-test
   (:require [clojure.test :refer :all]
-            [interprete.core :refer :all]))
+            [interprete.core :refer :all]
+            [interprete.funciones_auxiliares :refer :all]))
 
 (deftest test-palabra-reservada?
   (testing "Should be reserved word"
@@ -19,7 +20,6 @@
     (is (= true (palabra-reservada? 'atan)))
     (is (= true (palabra-reservada? 'sqrt)))
     (is (= true (palabra-reservada? 'break)))
-
     )
 
   (testing "Shouldn't be reserved word"
