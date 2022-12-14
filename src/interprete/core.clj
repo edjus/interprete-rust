@@ -1022,6 +1022,12 @@
 (defn procesar-f64-funcion [amb]
   (if (= (estado amb) :sin-errores)
     (case (simb-actual amb)
+      pow (-> amb
+               (escanear)
+               (procesar-terminal,,, (symbol "(") 11)
+               (expresion)
+               (procesar-terminal,,, (symbol ")") 12)
+               (generar,,, 'POW))
       sqrt (-> amb
                (escanear)
                (procesar-terminal,,, (symbol "(") 11)
@@ -1916,6 +1922,9 @@
       SQRT (let [res (aplicar-operador-monadico raiz-cuadrada pila)]
             (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
 
+      POW (let [res (aplicar-operador-monadico #(* % %) pila)]
+             (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
+
       ; SIN: Incrementa cont-prg en 1, quita de la pila un elemento numerico, calcula su seno y lo coloca al final de la pila.
       SIN (let [res (aplicar-operador-monadico calcular-seno pila)]
              (if (nil? res) res (recur cod regs-de-act (inc cont-prg) res mapa-regs)))
@@ -2080,7 +2089,7 @@
     (hash-set 'io 'Write 'process 'mut 'exit 'expect 'flush 'read_line 'chars 'nth 'unwrap 'fn 'as
               'break 'const 'continue 'crate 'else 'if 'enum 'for 'let 'loop 'match 'mod 'move 'mut
               'pub 'impl 'ref 'return 'static 'struct 'type 'unsafe 'where 'while 'do 'final 'proc
-              'sizeof 'typeof 'unsized 'virtual 'yield 'bool 'stdin 'stdout 'String 'sqrt 'abs 'atan 'f64)
+              'sizeof 'typeof 'unsized 'virtual 'yield 'bool 'stdin 'stdout 'String 'sqrt 'abs 'atan 'f64 'pow)
     word
   )
 )
