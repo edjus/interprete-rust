@@ -357,7 +357,7 @@
   (if (= (estado amb) :sin-errores)
     (let [simbolos-ya (simb-ya-parseados amb),
           nombre (second (drop-while #(not= % (symbol "(")) (reverse simbolos-ya))),
-          tipo-dato (if (contains? (hash-set 'i64 'f64 'bool 'String) (last simbolos-ya))
+          tipo-dato (if (contains? (hash-set 'i32 'i64 'f64 'bool 'String) (last simbolos-ya))
                       [(params-args (drop-last 2 simbolos-ya)) (last simbolos-ya)]
                       [(params-args simbolos-ya) ()]),
           valor (count (bytecode amb))]
@@ -512,6 +512,8 @@
               (escanear))
       f64 (-> amb
               (escanear))
+      i32 (-> amb
+              (escanear))
       (dar-error amb 15))
     amb)
   )
@@ -550,6 +552,8 @@
 (defn procesar-tipo-retorno [amb]
   (if (= (estado amb) :sin-errores)
     (case (simb-actual amb)
+      i32 (-> amb
+              (escanear))
       i64 (-> amb
               (escanear))
       f64 (-> amb
@@ -577,7 +581,7 @@
   ([amb]
    (if (= (estado amb) :sin-errores)
      (let [simbolos-ya (simb-ya-parseados amb),
-           params (if (contains? (hash-set 'i64 'f64 'bool 'String) (last simbolos-ya))
+           params (if (contains? (hash-set 'i64 'i32 'f64 'bool 'String) (last simbolos-ya))
                     (params-args (drop-last 2 simbolos-ya))
                     (params-args simbolos-ya)),
            proto-amb (vec (conj (map #(if (empty? %) % [(last %) nil]) params) (count (bytecode amb)))),
@@ -778,6 +782,8 @@
 (defn procesar-tipo-variable [amb]
   (if (= (estado amb) :sin-errores)
     (case (simb-actual amb)
+      i32 (-> amb
+              (escanear))
       i64 (-> amb
               (escanear))
       f64 (-> amb
@@ -988,6 +994,9 @@
   (if (= (estado amb) :sin-errores)
     (case (simb-actual amb)
       i64 (-> amb
+              (escanear)
+              (generar,,, 'TOI))
+      i32 (-> amb
               (escanear)
               (generar,,, 'TOI))
       f64 (-> amb
@@ -2480,6 +2489,7 @@
 (defn compatibles? [rust_symb, clj_value]
   (cond
     (vector? clj_value) true
+    (= rust_symb 'i32) (int? clj_value)
     (= rust_symb 'i64) (int? clj_value)
     (= rust_symb 'f64) (float? clj_value)
     (= rust_symb 'String) (string? clj_value)

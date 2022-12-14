@@ -2,7 +2,7 @@ use std::io;
 use std::io::Write;
 use std::process;
 
-fn mcd(mut x: i64, mut y: i64) -> i64 {
+fn mcd(mut x: i32, mut y: i32) -> i32 {
     if x <= 0 || y <= 0 {
         println!("ERROR: El algoritmo requiere dos numeros enteros positivos!");
         process::exit(1);
@@ -33,9 +33,9 @@ fn main() {
     io::stdin()
         .read_line(&mut renglon)
         .expect("Error de lectura!");
-    let x: i64 = renglon
+    let x: i32 = renglon
         .trim()
-        .parse::<i64>()
+        .parse::<i32>()
         .expect("Se esperaba un numero entero!");
 
     print!("y: ");
@@ -45,9 +45,9 @@ fn main() {
     io::stdin()
         .read_line(&mut renglon)
         .expect("Error de lectura!");
-    let y: i64 = renglon
+    let y: i32 = renglon
         .trim()
-        .parse::<i64>()
+        .parse::<i32>()
         .expect("Se esperaba un numero entero!");
 
     print!("{} es el MCD entre ", mcd(x, y));
